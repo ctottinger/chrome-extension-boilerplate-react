@@ -1,19 +1,13 @@
-// import { printLine } from './modules/print';
+// import { printLine } from './modules/print'; printLine("Using the 'printLine' function from the Print Module");
 
-// printLine("Using the 'printLine' function from the Print Module");
 
+// The content scripts like this are the ones that can access the DOM of the current tabs.
+
+console.log("HOWDY!")
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
-  console.log("Got the bat-signal!");
-  // console.log(msg, sender)
-
-  // If the received message has the expected format...
-  if (msg.text === 'report_back') {
-      // Call the specified callback, passing
-      // the web-page's DOM content as argument
-      sendResponse(document.querySelector(".question-hyperlink").innerText);
-  } else if(msg.text === 'alert_this') {
-    window.alert(msg.msg);
+  if (msg.msg === 'content_get_title') {
+    sendResponse(document.title);
   }
 });

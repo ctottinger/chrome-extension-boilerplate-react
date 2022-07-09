@@ -1,38 +1,67 @@
-console.log('Loaded background script');
+// This is the script to keep it alive, not go inactive in background. If it deactivates, open tab data would be lost.
+let lifeline;
+keepAlive();
+chrome.runtime.onConnect.addListener(port => {
+  if (port.name === 'keepAlive') {
+    lifeline = port;
+    setTimeout(keepAliveForced, 295e3); // 5 minutes minus 5 seconds
+    port.onDisconnect.addListener(keepAliveForced);
+  }
+});
+function keepAliveForced() {
+  lifeline?.disconnect();
+  lifeline = null;
+  keepAlive();
+}
+async function keepAlive() {
+  if (lifeline) return;
+  for (const tab of await chrome.tabs.query({ url: '*://*/*' })) {
+    try {
+      await chrome.scripting.executeScript({
+        target: { tabId: tab.id },
+        function: () => chrome.runtime.connect({ name: 'keepAlive' }),
+        // `function` will become `func` in Chrome 93+
+      });
+      chrome.tabs.onUpdated.removeListener(retryOnTabUpdate);
+      return;
+    } catch (e) {}
+  }
+  chrome.tabs.onUpdated.addListener(retryOnTabUpdate);
+}
+async function retryOnTabUpdate(tabId, info, tab) {
+  if (info.url && /^(file|https?):/.test(info.url)) {
+    keepAlive();
+  }
+}
+// Done with keep alive script
+
 
 async function getCurrentTab() {
-  let queryOptions = { active: true, lastFocusedWindow: true };
-  // `tab` will either be a `tabs.Tab` instance or `undefined`.
-  let [tab] = await chrome.tabs.query(queryOptions);
+  let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
   return tab;
 }
 
-async function sendAlert(msg) {
-  // chrome.tabs.sendMessage(, );
-  var ct = await getCurrentTab();
-  ct = ct.id;
-
-  chrome.tabs.sendMessage(ct, {text: 'alert_this', 'msg':msg});
-
+const openTabsOfInterest = [];
+const portalUrls = [
+  'small.com',
+  'irs.gov',
+  'php.net'
+];
+function checkUrl(url) {
+  return portalUrls.some(w => url.includes(w));
 }
-
-// Regex-pattern to check URLs against. 
-// It matches URLs like: http[s]://[...]stackoverflow.com[...]
-var urlRegex = /^https?:\/\/(?:[^./?#]+\.)?stackoverflow\.com/;
-
-// A function to use as callback
-function doStuffWithDom(domContent) {
-    // console.log('I received the following DOM content:\n' + domContent);
-    console.log(domContent);
-    sendAlert("Hiya! You seem to be researching \""+ domContent +"\"")
-}
-
-// When the browser-action button is clicked...
-chrome.action.onClicked.addListener(function (tab) {
-    console.log("Action Button Clicked", tab)
-    // ...check the URL of the active tab against our pattern and...
-    if (urlRegex.test(tab.url)) {
-        // ...if it matches, send a message specifying a callback too
-        chrome.tabs.sendMessage(tab.id, {text: 'report_back'}, doStuffWithDom);
+// Add an event listener for messages being passed through the pipeline
+chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+    // When the popup loads when the icon its clicked, it will send this event
+    if (msg.msg === "popupLoaded") {
+        getCurrentTab().then((tab)=>{
+          if(checkUrl(tab.url)) {
+            openTabsOfInterest.push({id: tab.id, url:tab.url, title:tab.title});
+          }
+          sendResponse(openTabsOfInterest);
+          console.log("Service Worker: ", openTabsOfInterest)
+        });
     }
+
+    return true;
 });
