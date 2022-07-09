@@ -1,6 +1,5 @@
 import React from 'react';
 import logo from '../../assets/img/logo.svg';
-import Greetings from '../../containers/Greetings/Greetings';
 import './Popup.css';
 
 const Popup = () => {
@@ -13,11 +12,11 @@ const Popup = () => {
         </p>
         <a
           className="App-link"
-          href="https://reactjs.org"
+          href="https://developer.chrome.com/docs/extensions/reference/storage/#usage"
           target="_blank"
           rel="noopener noreferrer"
         >
-          Learn React!
+          Chrome Storage
         </a>
       </header>
     </div>
