@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Jack's Automation",
   "description": "Automate Jack's account creation using a Chrome extension",
-  "background": { "service_worker": "background.bundle.js", "persistant": true },
+  "background": { "service_worker": "background.bundle.js", "type": "module" },
   "options_page": "options.html",
   "permissions": [
     "storage",

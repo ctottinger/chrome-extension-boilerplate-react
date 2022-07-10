@@ -1,3 +1,6 @@
+import PortalURLs from './urls';
+console.log(PortalURLs)
+
 // This is the script to keep it alive, not go inactive in background. If it deactivates, open tab data would be lost.
 let lifeline;
 keepAlive();
@@ -42,25 +45,23 @@ async function getCurrentTab() {
 }
 
 const openTabsOfInterest = [];
-const portalUrls = [
-  'small.com',
-  'irs.gov',
-  'php.net'
-];
 function checkUrl(url) {
-  return portalUrls.some(w => url.includes(w));
+  return PortalURLs.some(w => url.includes(w));
 }
 // Add an event listener for messages being passed through the pipeline
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
     // When the popup loads when the icon its clicked, it will send this event
     if (msg.msg === "popupLoaded") {
-        getCurrentTab().then((tab)=>{
-          if(checkUrl(tab.url)) {
-            openTabsOfInterest.push({id: tab.id, url:tab.url, title:tab.title});
-          }
-          sendResponse(openTabsOfInterest);
-          console.log("Service Worker: ", openTabsOfInterest)
-        });
+        const tab = sender.tab;
+        console.log("SERVICE::::", sender)
+        if(checkUrl(sender.tab.url)) {
+          openTabsOfInterest.push({id: tab.id, url:tab.url, title:tab.title});
+        }
+        sendResponse(openTabsOfInterest);
+        console.log("Service Worker: ", openTabsOfInterest)
+    } 
+    if(msg.msg === "content_pingtabid") {
+      sendResponse({tab: sender.tab})
     }
 
     return true;

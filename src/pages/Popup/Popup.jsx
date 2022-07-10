@@ -7,7 +7,6 @@ const UrlList = (props) => {
   if(props.urls.length === 0){
     return <div>No urls yet</div>
   }
-  console.log("It should have elements?")
   return (
     <ol>
       {
@@ -19,8 +18,23 @@ const UrlList = (props) => {
   )
 }
 
+async function getCurrentTab() {
+  let [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+  return tab;
+}
+
 const Popup = () => {
   const [url, setUrl] = useState([]);
+
+  /*
+  useEffect(() => {
+    getCurrentTab({ active: true, lastFocusedWindow: true }).then(tab => {
+      chrome.runtime.sendMessage({msg: "popupLoaded", tab: tab}, function(response){
+        setUrl(response);
+      });
+    });
+  }, []);
+  */
   
   useEffect(() => {
     chrome.runtime.sendMessage({msg: "popupLoaded"}, function(response){

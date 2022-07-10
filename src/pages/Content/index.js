@@ -1,9 +1,15 @@
 // import { printLine } from './modules/print'; printLine("Using the 'printLine' function from the Print Module");
 
 
-// The content scripts like this are the ones that can access the DOM of the current tabs.
+// Get the current tab ID, crucial to targetting specific tabs since runtime msgs are sent out en masse
+// All the important stuff has to happen after the tab id is discovered, so most of the logic must be contained here
+chrome.runtime.sendMessage({ msg: "content_pingtabid" }, response => {
+  const id = response.tab.id;
+  console.log('CONTENT_SCRIPT ::::: tab ==', id);
 
-console.log("HOWDY!")
+  
+});
+
 
 // Listen for messages
 chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
